@@ -112,7 +112,7 @@ class MoneroTxFilter extends Filter {
       if (this.getTx().getId() !== undefined && this.getTx().getId() !== tx.getId()) return false;
       if (this.getTx().getPaymentId() !== undefined && this.getTx().getPaymentId() !== tx.getPaymentId()) return false;
       if (this.getTx().getIsConfirmed() !== undefined && this.getTx().getIsConfirmed() !== tx.getIsConfirmed()) return false;
-      if (this.getTx().getInTxPool() !== undefined && this.getTx().getInTxPool() !== tx.getInTxPool()) return false;
+      if (this.getTx().getInMempool() !== undefined && this.getTx().getInMempool() !== tx.getInMempool()) return false;
       if (this.getTx().getDoNotRelay() !== undefined && this.getTx().getDoNotRelay() !== tx.getDoNotRelay()) return false;
       if (this.getTx().getIsRelayed() !== undefined && this.getTx().getIsRelayed() !== tx.getIsRelayed()) return false;
       if (this.getTx().getIsFailed() !== undefined && this.getTx().getIsFailed() !== tx.getIsFailed()) return false;

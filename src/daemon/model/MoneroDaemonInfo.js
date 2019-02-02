@@ -219,12 +219,12 @@ class MoneroDaemonInfo {
     return this;
   }
   
-  getTxPoolSize() {
-    return this.txPoolSize;
+  getMempoolSize() {
+    return this.mempoolSize;
   }
   
-  setTxPoolSize(txPoolSize) {
-    this.txPoolSize = txPoolSize;
+  setMempoolSize(mempoolSize) {
+    this.mempoolSize = mempoolSize;
     return this;
   }
   

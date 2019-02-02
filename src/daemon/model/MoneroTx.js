@@ -113,12 +113,12 @@ class MoneroTx {
     return this;
   }
   
-  getInTxPool() {
-    return this.state.inTxPool;
+  getInMempool() {
+    return this.state.inMempool;
   }
   
-  setInTxPool(inTxPool) {
-    this.state.inTxPool = inTxPool;
+  setInMempool(inMempool) {
+    this.state.inMempool = inMempool;
     return this;
   }
   
@@ -417,7 +417,7 @@ class MoneroTx {
     str += MoneroUtils.kvLine("Do not relay", this.getDoNotRelay(), indent);
     str += MoneroUtils.kvLine("Is relayed", this.getIsRelayed(), indent);
     str += MoneroUtils.kvLine("Is confirmed", this.getIsConfirmed(), indent);
-    str += MoneroUtils.kvLine("In tx pool", this.getInTxPool(), indent);
+    str += MoneroUtils.kvLine("In mempool", this.getInMempool(), indent);
     str += MoneroUtils.kvLine("Height", this.getHeight(), indent);
     str += MoneroUtils.kvLine("Confirmation count", this.getConfirmationCount(), indent);
     str += MoneroUtils.kvLine("Block timestamp", this.getBlockTimestamp(), indent);
@@ -544,12 +544,12 @@ class MoneroTx {
     
     // handle unrelayed -> relayed -> confirmed
     if (this.getIsConfirmed()) {
-      this.setInTxPool(false);
+      this.setInMempool(false);
       this.setReceivedTime(undefined);
       this.setLastRelayedTime(undefined);
       this.setEstimatedBlockCountUntilConfirmed(undefined);
     } else {
-      this.setInTxPool(MoneroUtils.reconcile(this.getInTxPool(), tx.getInTxPool(), {resolveTrue: true})); // unrelayed -> tx pool
+      this.setInMempool(MoneroUtils.reconcile(this.getInMempool(), tx.getInMempool(), {resolveTrue: true})); // unrelayed -> mempool
       this.setReceivedTime(MoneroUtils.reconcile(this.getReceivedTime(), tx.getReceivedTime(), {resolveMax: false})); // take earliest receive time
       this.setLastRelayedTime(MoneroUtils.reconcile(this.getLastRelayedTime(), tx.getLastRelayedTime(), {resolveMax: true}));  // take latest relay time
       this.setEstimatedBlockCountUntilConfirmed(MoneroUtils.reconcile(this.getEstimatedBlockCountUntilConfirmed(), tx.getEstimatedBlockCountUntilConfirmed(), {resolveMax: false})); // take min

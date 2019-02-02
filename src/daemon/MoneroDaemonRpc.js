@@ -17,10 +17,10 @@ const MoneroBan = require("./model/MoneroBan");
 const MoneroDaemonConnection = require("./model/MoneroDaemonConnection");
 const MoneroCoinbaseTxSum = require("./model/MoneroCoinbaseTxSum");
 const MoneroOutputHistogramEntry = require("./model/MoneroOutputHistogramEntry");
-const MoneroTxPool = require("./model/MoneroTxPool");
+const MoneroMempool = require("./model/MoneroMempool");
 const MoneroKeyImage = require("./model/MoneroKeyImage");
 const MoneroSubmitTxResult = require("./model/MoneroSubmitTxResult");
-const MoneroTxPoolStats = require("./model/MoneroTxPoolStats");
+const MoneroMempoolStats = require("./model/MoneroMempoolStats");
 const MoneroAltChain = require("./model/MoneroAltChain");
 const MoneroDaemonPeer = require("./model/MoneroDaemonPeer");
 const MoneroMiningStatus = require("./model/MoneroMiningStatus");
@@ -161,7 +161,7 @@ class MoneroDaemonRpc extends MoneroDaemon {
         tx.setId(rpcBlocks.blocks[blockIdx].tx_hashes[txIdx]);
         tx.setHeight(block.getHeader().getHeight());
         tx.setIsConfirmed(true);
-        tx.setInTxPool(false);
+        tx.setInMempool(false);
         tx.setIsCoinbase(false);
         tx.setIsRelayed(true);
         MoneroDaemonRpc._buildTx(rpcBlocks.txs[blockIdx][txIdx], tx);
@@ -239,24 +239,24 @@ class MoneroDaemonRpc extends MoneroDaemon {
     MoneroDaemonRpc._checkResponseStatus(resp);
   }
   
-  async getTxPoolTxsAndSpentKeyImages() {
+  async getMempoolTxsAndSpentKeyImages() {
     
     // send rpc request
     let resp = await this.config.rpc.sendPathRequest("get_transaction_pool");
     MoneroDaemonRpc._checkResponseStatus(resp);
     
     // container for txs and spent key images
-    let txPool = new MoneroTxPool();
+    let mempool = new MoneroMempool();
     
     // build txs
     let txs = [];
-    txPool.setTxs(txs);
+    mempool.setTxs(txs);
     if (resp.transactions) {
       for (let rpcTx of resp.transactions) {
         let tx = new MoneroTx();
         tx.setIsConfirmed(false);
         tx.setIsCoinbase(false);
-        tx.setInTxPool(true);
+        tx.setInMempool(true);
         MoneroDaemonRpc._buildTx(rpcTx, tx);
         txs.push(tx);
       }
@@ -264,16 +264,16 @@ class MoneroDaemonRpc extends MoneroDaemon {
     
     // build key images
     let keyImages = [];
-    txPool.setSpentKeyImages(keyImages);
+    mempool.setSpentKeyImages(keyImages);
     if (resp.spent_key_images) {
       for (let rpcKeyImage of resp.spent_key_images) {
         let keyImage = MoneroDaemonRpc._buildSpentKeyImage(rpcKeyImage);
-        keyImage.setSpentStatus(MoneroKeyImage.SpentStatus.TX_POOL);
+        keyImage.setSpentStatus(MoneroKeyImage.SpentStatus.MEMPOOL);
         keyImages.push(keyImage);
       }
     }
     
-    return txPool;
+    return mempool;
   }
   
   async getInfo() {
@@ -283,19 +283,19 @@ class MoneroDaemonRpc extends MoneroDaemon {
     return MoneroDaemonRpc._buildInfo(resp);
   }
   
-  async getTxPoolTxIds() {
+  async getMempoolTxIds() {
     throw new Error("Not implemented");
   }
   
-  async getTxPoolBacklog() {
+  async getMempoolBacklog() {
     throw new Error("Not implemented");
   }
 
-  async getTxPoolStats() {
+  async getMempoolStats() {
     throw new Error("Response contains field 'histo' which is binary'");
     let resp = await this.config.rpc.sendPathRequest("get_transaction_pool_stats");
     MoneroDaemonRpc._checkResponseStatus(resp);
-    let stats = MoneroDaemonRpc._buildTxPoolStats(resp.pool_stats);
+    let stats = MoneroDaemonRpc._buildMempoolStats(resp.pool_stats);
     
     // uninitialize some stats if not applicable
     if (stats.getTime98pc() === 0) stats.setTime98pc(undefined);
@@ -310,7 +310,7 @@ class MoneroDaemonRpc extends MoneroDaemon {
     return stats;
   }
   
-  async flushTxPool(ids) {
+  async flushMempool(ids) {
     if (ids) ids = GenUtils.listify(ids);
     let resp = await this.config.rpc.sendJsonRequest("flush_txpool", {txids: ids});
     MoneroDaemonRpc._checkResponseStatus(resp);
@@ -725,7 +725,7 @@ class MoneroDaemonRpc extends MoneroDaemon {
       else if (key === "receive_time") MoneroUtils.safeSet(tx, tx.getReceivedTime, tx.setReceivedTime, val);
       else if (key === "in_pool") {
         MoneroUtils.safeSet(tx, tx.getIsConfirmed, tx.setIsConfirmed, !val);
-        MoneroUtils.safeSet(tx, tx.getInTxPool, tx.setInTxPool, val);
+        MoneroUtils.safeSet(tx, tx.getInMempool, tx.setInMempool, val);
       }
       else if (key === "double_spend_seen") MoneroUtils.safeSet(tx, tx.getIsDoubleSpend, tx.setIsDoubleSpend, val);
       else if (key === "version") MoneroUtils.safeSet(tx, tx.getVersion, tx.setVersion, val);
@@ -853,7 +853,7 @@ class MoneroDaemonRpc extends MoneroDaemon {
       else if (key === "target_height") info.setTargetHeight(val);
       else if (key === "top_block_hash") info.setTopBlockId(val);
       else if (key === "tx_count") info.setTxCount(val);
-      else if (key === "tx_pool_size") info.setTxPoolSize(val);
+      else if (key === "tx_pool_size") info.setMempoolSize(val);
       else if (key === "untrusted") {} // set elsewhere
       else if (key === "was_bootstrap_ever_used") info.setWasBootstrapEverUsed(val);
       else if (key === "white_peerlist_size") info.setWhitePeerlistSize(val);
@@ -975,9 +975,9 @@ class MoneroDaemonRpc extends MoneroDaemon {
     return result;
   }
   
-  static _buildTxPoolStats(rpcStats) {
+  static _buildMempoolStats(rpcStats) {
     assert(rpcStats);
-    let stats = new MoneroTxPoolStats();
+    let stats = new MoneroMempoolStats();
     for (let key of Object.keys(rpcStats)) {
       let val = rpcStats[key];
       if (key === "bytes_max") stats.setBytesMax(val);
@@ -993,7 +993,7 @@ class MoneroDaemonRpc extends MoneroDaemon {
       else if (key === "txs_total") stats.setCount(val);
       else if (key === "fee_total") stats.setFeeTotal(new BigInteger(val));
       else if (key === "histo") throw new Error("Not implemented");
-      else console.log("WARNING: ignoring unexpected field in tx pool stats: " + key + ": " + val);
+      else console.log("WARNING: ignoring unexpected field in mempool stats: " + key + ": " + val);
     }
     return stats;
   }

@@ -96,7 +96,7 @@ class MoneroKeyImage {
 MoneroKeyImage.SpentStatus = {
     NOT_SPENT: 0,
     CONFIRMED: 1,
-    TX_POOL: 2
+    MEMPOOL: 2
 }
 
 module.exports = MoneroKeyImage;

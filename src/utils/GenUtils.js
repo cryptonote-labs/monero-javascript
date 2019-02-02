@@ -1310,6 +1310,15 @@ class GenUtils {
   static sort(array) {
     array.sort((a, b) => a === b ? 0 : a > b ? 1 : -1);
   }
+  
+  /**
+   * Sleep for a specified amount of time.
+   * 
+   * @param {long} ms is the amount of time to sleep in ms
+   */
+  static async sleep(ms) {
+    await new Promise(function(resolve) { setTimeout(resolve, ms); });
+  }
 }
 
 module.exports = GenUtils;

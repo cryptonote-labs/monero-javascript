@@ -651,10 +651,10 @@ class TestMoneroWalletCommon {
           assert(transfer.getTx().getIsConfirmed());
         }
         
-        // get transfers in the tx pool
-        transfers = await testGetTransfers(wallet, {inTxPool: true});
+        // get transfers in the mempool
+        transfers = await testGetTransfers(wallet, {inMempool: true});
         for (let transfer of transfers) {
-          assert.equal(transfer.getTx().getInTxPool(), true);
+          assert.equal(transfer.getTx().getInMempool(), true);
         }
         
         // get random transactions
@@ -886,7 +886,7 @@ class TestMoneroWalletCommon {
         // balance may not equal sum of unspent vouts if if unconfirmed txs
         // TODO monero-wallet-rpc: reason not to return unspent vouts on unconfirmed txs? then this isn't necessary
         let hasUnconfirmedTx = false;
-        for (let tx of txs) if (tx.getInTxPool()) hasUnconfirmedTx = true;
+        for (let tx of txs) if (tx.getInMempool()) hasUnconfirmedTx = true;
         
         // wallet balance is sum of all unspent vouts
         let walletSum = new BigInteger(0);
@@ -1101,7 +1101,7 @@ class TestMoneroWalletCommon {
         
         // get random confirmed outgoing txs
         let filter = new MoneroTxFilter();
-        let txs = await getRandomTransactions(wallet, {hasIncomingTransfers: false, inTxPool: false, isFailed: false}, 2, MAX_TX_PROOFS);
+        let txs = await getRandomTransactions(wallet, {hasIncomingTransfers: false, inMempool: false, isFailed: false}, 2, MAX_TX_PROOFS);
         for (let tx of txs) {
           assert.equal(tx.getIsConfirmed(), true);
           assert.equal(tx.getIncomingTransfers(), undefined);
@@ -1155,7 +1155,7 @@ class TestMoneroWalletCommon {
         testCheckReserve(check);
         let balance = await wallet.getBalance();
         if (balance.compare(check.getAmountTotal()) !== 0) {  // TODO monero-wallet-rpc: this check fails with unconfirmed txs
-          let unconfirmedTxs = await wallet.getTxs({inTxPool: true});
+          let unconfirmedTxs = await wallet.getTxs({inMempool: true});
           assert(unconfirmedTxs.length > 0, "Reserve amount must equal balance unless wallet has unconfirmed txs");
         }
         
@@ -1998,7 +1998,7 @@ class TestMoneroWalletCommon {
         for (let tx of sentTxs) {
           await testWalletTx(tx, {wallet: wallet, sendConfig: sendConfig})
           assert.equal(tx.getIsConfirmed(), false);
-          assert.equal(tx.getInTxPool(), true);
+          assert.equal(tx.getInMempool(), true);
         }
         
         // track resulting outoging and incoming txs as blocks are added to the chain
@@ -2229,7 +2229,7 @@ async function testWalletTx(tx, testConfig) {
   if (tx.getIsConfirmed()) {
     assert.equal(tx.getIsRelayed(), true);
     assert.equal(tx.getIsFailed(), false);
-    assert.equal(tx.getInTxPool(), false);
+    assert.equal(tx.getInMempool(), false);
     assert.equal(tx.getDoNotRelay(), false);
     assert(tx.getHeight() >= 0);
     assert(tx.getConfirmationCount() > 0);
@@ -2241,8 +2241,8 @@ async function testWalletTx(tx, testConfig) {
     assert.equal(tx.getBlockTimestamp(), undefined);
   }
   
-  // test in tx pool
-  if (tx.getInTxPool()) {
+  // test in mempool
+  if (tx.getInMempool()) {
     assert.equal(tx.getIsConfirmed(), false);
     assert.equal(tx.getDoNotRelay(), false);
     assert.equal(tx.getIsRelayed(), true);
@@ -2328,9 +2328,9 @@ async function testWalletTx(tx, testConfig) {
   assert.equal(tx.getLastFailedHeight(), undefined);
   assert.equal(tx.getLastFailedId(), undefined);
   
-  // received time only for tx pool or failed txs
+  // received time only for mempool or failed txs
   if (tx.getReceivedTime() !== undefined) {
-    assert(tx.getInTxPool() || tx.getIsFailed());
+    assert(tx.getInMempool() || tx.getIsFailed());
   }
   
   // test relayed tx
@@ -2370,7 +2370,7 @@ async function testWalletTx(tx, testConfig) {
     
     // test relayed txs
     if (testConfig.isRelayResponse || !sendConfig.getDoNotRelay()) {
-      assert.equal(tx.getInTxPool(), true);
+      assert.equal(tx.getInMempool(), true);
       assert.equal(tx.getDoNotRelay(), false);
       assert.equal(tx.getIsRelayed(), true);
       assert(tx.getLastRelayedTime() > 0);
@@ -2379,7 +2379,7 @@ async function testWalletTx(tx, testConfig) {
     
     // test non-relayed txs
     else {
-      assert.equal(tx.getInTxPool(), false);
+      assert.equal(tx.getInMempool(), false);
       assert.equal(tx.getDoNotRelay(), true);
       assert.equal(tx.getIsRelayed(), false);
       assert.equal(tx.getLastRelayedTime(), undefined);
@@ -2412,7 +2412,7 @@ function testWalletTxTypes(tx) {
   assert.equal(typeof tx.getIsCoinbase(), "boolean");
   assert.equal(typeof tx.getIsFailed(), "boolean");
   assert.equal(typeof tx.getIsRelayed(), "boolean");
-  assert.equal(typeof tx.getInTxPool(), "boolean");
+  assert.equal(typeof tx.getInMempool(), "boolean");
   TestUtils.testUnsignedBigInteger(tx.getFee());
   assert.equal(tx.getVins(), undefined);  // TODO no way to expose vins?
   if (tx.getPaymentId()) assert.notEqual(tx.getPaymentId(), MoneroTx.DEFAULT_PAYMENT_ID); // default payment id converted to undefined
@@ -2570,13 +2570,13 @@ function testCheckTx(tx, check) {
   assert.equal(typeof check.getIsGood(), "boolean");
   if (check.getIsGood()) {
     assert(check.getConfirmationCount() >= 0);
-    assert.equal(typeof check.getInTxPool(), "boolean");
+    assert.equal(typeof check.getInMempool(), "boolean");
     TestUtils.testUnsignedBigInteger(check.getAmountReceived());
-    if (check.getInTxPool()) assert.equal(0, check.getConfirmationCount());
+    if (check.getInMempool()) assert.equal(0, check.getConfirmationCount());
     else assert(check.getConfirmationCount() > 0); // TODO (monero-wall-rpc) this fails (confirmations is 0) for (at least one) transaction that has 1 confirmation on testCheckTxKey()
   } else {
     assert.equal(check.getConfirmationCount(), undefined);
-    assert.equal(check.getInTxPool(), undefined);
+    assert.equal(check.getInMempool(), undefined);
     assert.equal(check.getAmountReceived(), undefined);
   }
 }

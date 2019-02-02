@@ -1,8 +1,7 @@
-"cold running" tests result in daemon failures first run
+openWallet() toggles available funds for daemon flush tests as well
 todos throughout code
 sweep subaddresses test
 object model
-txpool -> mempool?
 rpc impls _build.. -> _decode..
 don't wrap single return fields with MoneroDaemonModel? e.g. fee
 test daemon getIsCoinbase()
@@ -40,6 +39,8 @@ support vout filter in tx filter?
 undefined amounts instead of 0 for rct amounts
 MoneroBan includes redundant info with MoneroPeer
 block comments in models
+failures after send tests
+tx "regardless of" test sporadically fails, after send?
 
 JS now has native BigInt class which could be used instead of current BigInteger
 switch to jest?

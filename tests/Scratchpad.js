@@ -33,7 +33,7 @@ describe("Scratchpad", function() {
 //  await daemon.stopMining();
 //  await wallet.rescanBlockchain();
 //  await wallet.rescanSpent();
-//  await daemon.flushTxPool();
+//  await daemon.flushMempool();
     
     // common variables
     let txs;

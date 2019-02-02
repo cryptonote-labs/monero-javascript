@@ -1,7 +1,7 @@
 /**
- * Models transaction pool statistics.
+ * Models mempool statistics.
  */
-class MoneroTxPoolStats {
+class MoneroMempoolStats {
   
   getCount() {
     return this.count;
@@ -122,4 +122,4 @@ class MoneroTxPoolStats {
   }
 }
 
-module.exports = MoneroTxPoolStats;
+module.exports = MoneroMempoolStats;

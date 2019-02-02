@@ -376,16 +376,16 @@ class MoneroWalletRpc extends MoneroWallet {
     }
     
     // build params for `get_transfers` rpc call
-    let canBeConfirmed = tx.getIsConfirmed() !== false && tx.getInTxPool() !== true && tx.getIsFailed() !== true && tx.getIsRelayed() !== false;
-    let canBeInTxPool = tx.getIsConfirmed() !== true && tx.getInTxPool() !== false && tx.getIsFailed() !== true & tx.getIsRelayed() !== false && tx.getHeight() === undefined && txFilter.getMinHeight() === undefined;
+    let canBeConfirmed = tx.getIsConfirmed() !== false && tx.getInMempool() !== true && tx.getIsFailed() !== true && tx.getIsRelayed() !== false;
+    let canBeInMempool = tx.getIsConfirmed() !== true && tx.getInMempool() !== false && tx.getIsFailed() !== true & tx.getIsRelayed() !== false && tx.getHeight() === undefined && txFilter.getMinHeight() === undefined;
     let canBeIncoming = transferFilter.getIsIncoming() !== false && transferFilter.getIsOutgoing() !== true && transferFilter.getHasDestinations() !== true;
     let canBeOutgoing = transferFilter.getIsOutgoing() !== false && transferFilter.getIsIncoming() !== true;
     let params = {};
     params.in = canBeIncoming && canBeConfirmed;
     params.out = canBeOutgoing && canBeConfirmed;
-    params.pool = canBeIncoming && canBeInTxPool;
-    params.pending = canBeOutgoing && canBeInTxPool;
-    params.failed = tx.getIsFailed() !== false && tx.getIsConfirmed() !== true && tx.getInTxPool() != true;
+    params.pool = canBeIncoming && canBeInMempool;
+    params.pending = canBeOutgoing && canBeInMempool;
+    params.failed = tx.getIsFailed() !== false && tx.getIsConfirmed() !== true && tx.getInMempool() != true;
     if (txFilter.getMinHeight() !== undefined) params.min_height = txFilter.getMinHeight(); 
     if (txFilter.getMaxHeight() !== undefined) params.max_height = txFilter.getMaxHeight();
     params.filter_by_height = txFilter.getMinHeight() !== undefined || txFilter.getMaxHeight() !== undefined;
@@ -615,7 +615,7 @@ class MoneroWalletRpc extends MoneroWallet {
       for (let tx of accountTxs) {
         tx.setIsConfirmed(false);
         tx.setConfirmationCount(0);
-        tx.setInTxPool(config.getDoNotRelay() ? false : true);
+        tx.setInMempool(config.getDoNotRelay() ? false : true);
         tx.setDoNotRelay(config.getDoNotRelay() ? true : false);
         tx.setIsRelayed(!tx.getDoNotRelay());
         tx.setIsCoinbase(false);
@@ -700,7 +700,7 @@ class MoneroWalletRpc extends MoneroWallet {
     for (let i = 0; i < txs.length; i++) {
       let relayedTx = txs[i].copy();
       relayedTxs.push(relayedTx);
-      relayedTx.setInTxPool(true);
+      relayedTx.setInMempool(true);
       relayedTx.setDoNotRelay(false);
       relayedTx.setIsRelayed(true);
       relayedTx.setIsCoinbase(false);
@@ -750,7 +750,7 @@ class MoneroWalletRpc extends MoneroWallet {
     let check = new MoneroCheckTx();
     check.setIsGood(true);
     check.setConfirmationCount(resp.confirmations);
-    check.setInTxPool(resp.in_pool);
+    check.setInMempool(resp.in_pool);
     check.setAmountReceived(new BigInteger(resp.received));
     return check;
   }
@@ -776,7 +776,7 @@ class MoneroWalletRpc extends MoneroWallet {
     check.setIsGood(isGood);
     if (isGood) {
       check.setConfirmationCount(resp.confirmations);
-      check.setInTxPool(resp.in_pool);
+      check.setInMempool(resp.in_pool);
       check.setAmountReceived(new BigInteger(resp.received));
     }
     return check;
@@ -1065,7 +1065,7 @@ class MoneroWalletRpc extends MoneroWallet {
     else {
       assert.equal(typeof isOutgoing, "boolean", "Must indicate if tx is outgoing (true) xor incoming (false) since unknown");
       assert.equal(typeof tx.getIsConfirmed(), "boolean");
-      assert.equal(typeof tx.getInTxPool(), "boolean");
+      assert.equal(typeof tx.getInMempool(), "boolean");
       assert.equal(typeof tx.getIsCoinbase(), "boolean");
       assert.equal(typeof tx.getIsFailed(), "boolean");
       assert.equal(typeof tx.getDoNotRelay(), "boolean");
@@ -1100,7 +1100,7 @@ class MoneroWalletRpc extends MoneroWallet {
         else tx.setConfirmationCount(val);
       }
       else if (key === "suggested_confirmations_threshold") {
-        if (tx.getInTxPool()) tx.setEstimatedBlockCountUntilConfirmed(val);
+        if (tx.getInMempool()) tx.setEstimatedBlockCountUntilConfirmed(val);
         else tx.setEstimatedBlockCountUntilConfirmed(undefined)
       }
       else if (key === "amount") {
@@ -1198,7 +1198,7 @@ class MoneroWalletRpc extends MoneroWallet {
     if (!tx) tx = new MoneroWalletTx();
     tx.setIsConfirmed(false);
     tx.setConfirmationCount(0);
-    tx.setInTxPool(config.getDoNotRelay() ? false : true);
+    tx.setInMempool(config.getDoNotRelay() ? false : true);
     tx.setDoNotRelay(config.getDoNotRelay() ? true : false);
     tx.setIsRelayed(!tx.getDoNotRelay());
     tx.setIsCoinbase(false);
@@ -1274,7 +1274,7 @@ class MoneroWalletRpc extends MoneroWallet {
     if (rpcType === "in") {
       isOutgoing = false;
       tx.setIsConfirmed(true);
-      tx.setInTxPool(false);
+      tx.setInMempool(false);
       tx.setIsRelayed(true);
       tx.setDoNotRelay(false);
       tx.setIsFailed(false);
@@ -1282,7 +1282,7 @@ class MoneroWalletRpc extends MoneroWallet {
     } else if (rpcType === "out") {
     	isOutgoing = true;
       tx.setIsConfirmed(true);
-      tx.setInTxPool(false);
+      tx.setInMempool(false);
       tx.setIsRelayed(true);
       tx.setDoNotRelay(false);
       tx.setIsFailed(false);
@@ -1290,7 +1290,7 @@ class MoneroWalletRpc extends MoneroWallet {
     } else if (rpcType === "pool") {
     	isOutgoing = false;
       tx.setIsConfirmed(false);
-      tx.setInTxPool(true);
+      tx.setInMempool(true);
       tx.setIsRelayed(true);
       tx.setDoNotRelay(false);
       tx.setIsFailed(false);
@@ -1298,7 +1298,7 @@ class MoneroWalletRpc extends MoneroWallet {
     } else if (rpcType === "pending") {
     	isOutgoing = true;
       tx.setIsConfirmed(false);
-      tx.setInTxPool(true);
+      tx.setInMempool(true);
       tx.setIsRelayed(true);
       tx.setDoNotRelay(false);
       tx.setIsFailed(false);
@@ -1306,7 +1306,7 @@ class MoneroWalletRpc extends MoneroWallet {
     } else if (rpcType === "block") {
     	isOutgoing = false;
       tx.setIsConfirmed(true);
-      tx.setInTxPool(false);
+      tx.setInMempool(false);
       tx.setIsRelayed(true);
       tx.setDoNotRelay(false);
       tx.setIsFailed(false);
@@ -1314,7 +1314,7 @@ class MoneroWalletRpc extends MoneroWallet {
     } else if (rpcType === "failed") {
     	isOutgoing = true;
       tx.setIsConfirmed(false);
-      tx.setInTxPool(false);
+      tx.setInMempool(false);
       tx.setIsRelayed(true);
       tx.setDoNotRelay(false);
       tx.setIsFailed(true);

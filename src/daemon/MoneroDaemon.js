@@ -208,7 +208,7 @@ class MoneroDaemon {
   }
   
   /**
-   * Submits a transaction to the daemon's pool.
+   * Submits a transaction to the daemon's mempool.
    * 
    * @param {string} txHex is the raw transaction hex to submit
    * @param {boolean} doNotRelay specifies if the tx should be relayed (optional)
@@ -239,47 +239,47 @@ class MoneroDaemon {
   
   /**
    * Get valid transactions seen by the node but not yet mined into a block, as well
-   * as spent key image information for the tx pool.
+   * as spent key image information for the mempool.
    * 
-   * @return {MoneroTxPool} contains tx pool transactions and spent key images
+   * @return {MoneroMempool} contains mempool transactions and spent key images
    */
-  async getTxPoolTxsAndSpentKeyImages() {
+  async getMempoolTxsAndSpentKeyImages() {
     throw new Error("Subclass must implement");
   }
   
   /**
-   * Get ids of transactions in the transaction pool.
+   * Get ids of transactions in the mempool.
    * 
-   * @return {string[]} are ids of transactions in the transaction pool
+   * @return {string[]} are ids of transactions in the mempool
    */
-  async getTxPoolTxIds() {
+  async getMempoolTxIds() {
     throw new Error("Subclass must implement");
   }
   
   /**
-   * Get all transaction pool backlog.
+   * Get all mempool backlog.
    * 
    * @return {MoneroTxBacklogEntry[]} are the backlog entries 
    */
-  async getTxPoolBacklog() {
+  async getMempoolBacklog() {
     throw new Error("Subclass must implement");
   }
   
   /**
-   * Get transaction pool statistics.
+   * Get mempool statistics.
    * 
-   * @return {MoneroTxPoolStats} contains statistics about the transaction pool
+   * @return {MoneroMempoolStats} contains statistics about the mempool
    */
-  async getTxPoolStats() {
+  async getMempoolStats() {
     throw new Error("Subclass must implement");
   }
   
   /**
-   * Flush transactions from the memory pool.
+   * Flush transactions from the mempool.
    * 
    * @param {(string|string[])} ids are specific transactions to flush (defaults to all)
    */
-  async flushTxPool(ids) {
+  async flushMempool(ids) {
     throw new Error("Subclass must implement");
   }
   

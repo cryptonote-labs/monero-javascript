@@ -1,7 +1,7 @@
 /**
- * Models transactions and spent key images known to the daemon's transaction pool.
+ * Models transactions and spent key images known to the daemon's mempool.
  */
-class MoneroTxPool {
+class MoneroMempool {
   
   getTxs() {
     return this.txs;
@@ -22,4 +22,4 @@ class MoneroTxPool {
   }
 }
 
-module.exports = MoneroTxPool;
+module.exports = MoneroMempool;
